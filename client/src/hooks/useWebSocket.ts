@@ -33,7 +33,91 @@ export function useWebSocket(): UseWebSocketReturn {
   const socketRef = useRef<WebSocket | null>(null);
   const pingTimerRef = useRef<number | null>(null);
   const pingTimeRef = useRef<number>(0);
+  const userIdRef = useRef<string | null>(null); // Reference to store userId for reliable access
   const { toast } = useToast();
+  
+  // Function to send a ping message to the server
+  const sendPing = useCallback(() => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      pingTimeRef.current = Date.now();
+      socketRef.current.send(JSON.stringify({
+        type: 'ping',
+        payload: { timestamp: pingTimeRef.current }
+      }));
+    }
+  }, []);
+  
+  // Start ping interval to measure latency
+  const startPingInterval = useCallback(() => {
+    // Clear any existing interval
+    if (pingTimerRef.current) {
+      window.clearInterval(pingTimerRef.current);
+    }
+    
+    // Set up new interval (every 5 seconds)
+    const interval = window.setInterval(sendPing, 5000);
+    pingTimerRef.current = interval;
+  }, [sendPing]);
+  
+  // Handle counter increment
+  const incrementCounter = useCallback(() => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({
+        type: 'increment',
+        payload: {}
+      }));
+    } else {
+      toast({
+        title: 'Not Connected',
+        description: 'Cannot increment counter while disconnected',
+        variant: 'destructive'
+      });
+    }
+  }, [toast]);
+  
+  // Handle WebSocket message processing
+  const handleMessage = useCallback((event: MessageEvent) => {
+    try {
+      const message = JSON.parse(event.data);
+      
+      switch (message.type) {
+        case 'user_joined':
+          // Store the user ID in both state and ref for immediate access
+          const newUserId = message.payload.id;
+          setUserId(newUserId);
+          userIdRef.current = newUserId;
+          break;
+          
+        case 'user_list':
+          setConnectedUsers(message.payload);
+          
+          // Use userIdRef to reliably find the current user even if state hasn't updated
+          const currentUserId = userIdRef.current || userId;
+          
+          if (currentUserId) {
+            const currentUser = message.payload.find(
+              (user: CounterUser) => user.id === currentUserId
+            );
+            
+            if (currentUser) {
+              setUserCount(currentUser.count);
+            }
+          }
+          break;
+          
+        case 'pong':
+          // Calculate latency from ping time
+          const latency = Date.now() - pingTimeRef.current;
+          setWebsocketInfo(prev => ({
+            ...prev,
+            latency
+          }));
+          break;
+      }
+    } catch (error) {
+      console.error('Error parsing WebSocket message:', error);
+    }
+  }, [userId]);
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -60,38 +144,7 @@ export function useWebSocket(): UseWebSocketReturn {
       startPingInterval();
     };
     
-    socket.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        
-        switch (message.type) {
-          case 'user_joined':
-            setUserId(message.payload.id);
-            break;
-            
-          case 'user_list':
-            setConnectedUsers(message.payload);
-            
-            // Update current user's count
-            const currentUser = message.payload.find((user: CounterUser) => user.id === userId);
-            if (currentUser) {
-              setUserCount(currentUser.count);
-            }
-            break;
-            
-          case 'pong':
-            // Calculate latency
-            const latency = Date.now() - pingTimeRef.current;
-            setWebsocketInfo(prev => ({
-              ...prev,
-              latency
-            }));
-            break;
-        }
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    };
+    socket.onmessage = handleMessage;
     
     socket.onclose = () => {
       setIsConnected(false);
@@ -140,44 +193,7 @@ export function useWebSocket(): UseWebSocketReturn {
         socket.close();
       }
     };
-  }, [toast]);
-  
-  // Start ping interval to measure latency
-  const startPingInterval = useCallback(() => {
-    // Clear any existing interval
-    if (pingTimerRef.current) {
-      window.clearInterval(pingTimerRef.current);
-    }
-    
-    // Set up new interval (every 5 seconds)
-    const interval = window.setInterval(() => {
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
-        pingTimeRef.current = Date.now();
-        socketRef.current.send(JSON.stringify({
-          type: 'ping',
-          payload: { timestamp: pingTimeRef.current }
-        }));
-      }
-    }, 5000);
-    
-    pingTimerRef.current = interval;
-  }, []);
-  
-  // Handle increment counter
-  const incrementCounter = useCallback(() => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({
-        type: 'increment',
-        payload: {}
-      }));
-    } else {
-      toast({
-        title: 'Not Connected',
-        description: 'Cannot increment counter while disconnected',
-        variant: 'destructive'
-      });
-    }
-  }, [toast]);
+  }, [toast, startPingInterval, handleMessage]);
   
   return {
     isConnected,
