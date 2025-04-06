@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { Add } from '@mui/icons-material';
+import { Mouse } from '@mui/icons-material';
 
 interface CounterButtonProps {
   count: number;
@@ -31,10 +31,9 @@ export function CounterButton({ count, onIncrement }: CounterButtonProps) {
       <Button
         size="lg"
         onClick={handleClick}
-        className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 h-auto text-lg transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-full"
+        className="bg-primary hover:bg-primary/90 text-primary-foreground p-8 h-auto transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-full"
       >
-        <Add className="mr-2 h-6 w-6" />
-        Increment Counter
+        <Mouse className="h-16 w-16" />
       </Button>
     </div>
   );

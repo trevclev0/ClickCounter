@@ -14,6 +14,7 @@ export interface IStorage {
   createCounterUser(user: InsertCounterUser): Promise<CounterUser>;
   updateCounterUserCount(id: string, count: number): Promise<CounterUser | undefined>;
   updateCounterUserName(id: string, name: string): Promise<CounterUser | undefined>;
+  removeCounterUser(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -79,6 +80,11 @@ export class MemStorage implements IStorage {
     const updatedUser = { ...user, name };
     this.counterUsers.set(id, updatedUser);
     return updatedUser;
+  }
+  
+  async removeCounterUser(id: string): Promise<boolean> {
+    if (!this.counterUsers.has(id)) return false;
+    return this.counterUsers.delete(id);
   }
 }
 

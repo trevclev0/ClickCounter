@@ -137,16 +137,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('close', async () => {
       log(`WebSocket client disconnected: ${ws.userId}`);
 
-      // Remove user from storage when they disconnect
-      const userList = await storage.getCounterUsers();
-      const updatedUserList = userList.filter(user => user.id !== ws.userId);
-      
-      // Broadcast the updated user list
-      const updateMessage: WebSocketMessage = {
-        type: 'user_list',
-        users: updatedUserList
-      };
-      broadcastMessage(wss, null, updateMessage);
+      try {
+        // Actually delete the user from storage when they disconnect
+        const userList = await storage.getCounterUsers();
+        
+        // Remove this user from storage
+        await storage.removeCounterUser(ws.userId);
+        
+        // Get the updated list (after removal)
+        const updatedUserList = await storage.getCounterUsers();
+        
+        // Broadcast the updated user list
+        const updateMessage: WebSocketMessage = {
+          type: 'user_list',
+          users: updatedUserList
+        };
+        broadcastMessage(wss, null, updateMessage);
+      } catch (error) {
+        console.error('Error handling disconnection:', error);
+      }
     });
 
     // Handle pings for connection health checks

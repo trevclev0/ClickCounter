@@ -27,9 +27,9 @@ const Home: FC = () => {
       <header className="bg-primary text-primary-foreground shadow-lg z-10">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <h1 className="text-xl font-medium">Click Counter</h1>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <ConnectionToggle isConnected={isConnected} onToggle={toggleConnection} />
             <ThemeToggle />
-            <ConnectionStatus isConnected={isConnected} />
           </div>
         </div>
       </header>
@@ -39,10 +39,7 @@ const Home: FC = () => {
           {/* Counter Section */}
           <div className="flex flex-col items-center justify-center mb-10">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-medium text-foreground mb-2">Your Click Counter</h2>
-              <p className="text-muted-foreground">
-                Click the button to increase your counter and share with others
-              </p>
+              <h2 className="text-2xl font-medium text-foreground mb-2">Rage Click</h2>
             </div>
             
             <CounterButton count={userCount} onIncrement={incrementCounter} />
@@ -50,10 +47,6 @@ const Home: FC = () => {
             {/* User Profile Controls */}
             {userId && (
               <div className="mt-6 flex flex-col sm:flex-row gap-4 items-center justify-center p-4 border border-border rounded-lg bg-card/50">
-                <div className="flex items-center">
-                  <ConnectionToggle isConnected={isConnected} onToggle={toggleConnection} />
-                </div>
-                
                 <div className="flex items-center">
                   {connectedUsers.find(user => user.id === userId)?.name && (
                     <NameChangeDialog 
