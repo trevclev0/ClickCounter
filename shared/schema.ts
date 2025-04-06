@@ -29,8 +29,21 @@ export type CounterUser = typeof counterUsers.$inferSelect;
 
 // WebSocket message schemas
 export const messageSchema = z.object({
-  type: z.enum(['increment', 'user_joined', 'user_list', 'ping', 'pong']),
-  payload: z.any(),
+  type: z.enum([
+    'increment_counter', 
+    'user_joined', 
+    'user_list', 
+    'counter_update',
+    'name_change',
+    'change_name',
+    'ping', 
+    'pong'
+  ]),
+  // Optional fields for different message types
+  userId: z.string().optional(),
+  count: z.number().optional(),
+  name: z.string().optional(),
+  users: z.array(z.any()).optional(), // For user list messages
 });
 
 export type WebSocketMessage = z.infer<typeof messageSchema>;

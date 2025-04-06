@@ -1,10 +1,13 @@
-import { FC } from 'react';
-import { useWebSocket } from '@/hooks/useWebSocket';
-import ConnectionStatus from '@/components/ConnectionStatus';
-import CounterButton from '@/components/CounterButton';
-import UserCounterCard from '@/components/UserCounterCard';
-import ConnectionInfo from '@/components/ConnectionInfo';
+import { FC, useState } from 'react';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { ConnectionStatus } from '../components/ConnectionStatus';
+import { CounterButton } from '../components/CounterButton';
+import { UserCounterCard } from '../components/UserCounterCard';
+import { ConnectionInfo } from '../components/ConnectionInfo';
 import { Groups } from '@mui/icons-material';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { ConnectionToggle } from '../components/ConnectionToggle';
+import { NameChangeDialog } from '../components/NameChangeDialog';
 
 const Home: FC = () => {
   const { 
@@ -13,7 +16,9 @@ const Home: FC = () => {
     userCount, 
     connectedUsers, 
     websocketInfo, 
-    incrementCounter 
+    incrementCounter,
+    toggleConnection,
+    updateDisplayName
   } = useWebSocket();
   
   return (
@@ -22,7 +27,10 @@ const Home: FC = () => {
       <header className="bg-primary text-primary-foreground shadow-lg z-10">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <h1 className="text-xl font-medium">Click Counter</h1>
-          <ConnectionStatus isConnected={isConnected} />
+          <div className="flex items-center space-x-4">
+            <ThemeToggle />
+            <ConnectionStatus isConnected={isConnected} />
+          </div>
         </div>
       </header>
       
@@ -38,6 +46,24 @@ const Home: FC = () => {
             </div>
             
             <CounterButton count={userCount} onIncrement={incrementCounter} />
+            
+            {/* User Profile Controls */}
+            {userId && (
+              <div className="mt-6 flex flex-col sm:flex-row gap-4 items-center justify-center p-4 border border-border rounded-lg bg-card/50">
+                <div className="flex items-center">
+                  <ConnectionToggle isConnected={isConnected} onToggle={toggleConnection} />
+                </div>
+                
+                <div className="flex items-center">
+                  {connectedUsers.find(user => user.id === userId)?.name && (
+                    <NameChangeDialog 
+                      currentName={connectedUsers.find(user => user.id === userId)?.name || ''} 
+                      onNameChange={updateDisplayName} 
+                    />
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Users List */}

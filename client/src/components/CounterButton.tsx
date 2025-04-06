@@ -1,27 +1,41 @@
-import { FC } from 'react';
-import { Button } from '@/components/ui/button';
-import { TouchApp } from '@mui/icons-material';
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Add } from '@mui/icons-material';
 
 interface CounterButtonProps {
   count: number;
   onIncrement: () => void;
 }
 
-const CounterButton: FC<CounterButtonProps> = ({ count, onIncrement }) => {
+export function CounterButton({ count, onIncrement }: CounterButtonProps) {
+  const [isAnimating, setIsAnimating] = useState(false);
+  
+  const handleClick = () => {
+    setIsAnimating(true);
+    onIncrement();
+    
+    // Remove animation class after animation completes
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 300);
+  };
+  
   return (
-    <div className="text-center">
-      <div className="mb-3 text-3xl font-medium text-primary">
-        {count}
+    <div className="flex flex-col items-center">
+      <div className="text-5xl font-bold mb-4 text-primary">
+        <span className={isAnimating ? "animate-bounce" : ""}>
+          {count}
+        </span>
       </div>
-      <Button 
-        onClick={onIncrement}
-        className="flex items-center justify-center py-6 px-6 rounded-full"
+      
+      <Button
+        size="lg"
+        onClick={handleClick}
+        className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 h-auto text-lg transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-full"
       >
-        <TouchApp className="h-5 w-5 mr-2" />
-        <span>Click Me</span>
+        <Add className="mr-2 h-6 w-6" />
+        Increment Counter
       </Button>
     </div>
   );
-};
-
-export default CounterButton;
+}

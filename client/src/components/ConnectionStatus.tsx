@@ -1,18 +1,28 @@
-import { FC } from 'react';
+import React from 'react';
+import { Badge } from './ui/badge';
+import { SignalWifi4Bar, SignalWifiOff } from '@mui/icons-material';
 
 interface ConnectionStatusProps {
   isConnected: boolean;
 }
 
-const ConnectionStatus: FC<ConnectionStatusProps> = ({ isConnected }) => {
+export function ConnectionStatus({ isConnected }: ConnectionStatusProps) {
   return (
-    <div className="flex items-center">
-      <span 
-        className={`inline-block w-3 h-3 rounded-full ${isConnected ? 'bg-green-500 pulse' : 'bg-red-500'} mr-2`} 
-      />
-      <span className="text-sm">{isConnected ? 'Connected' : 'Disconnected'}</span>
-    </div>
+    <Badge
+      variant={isConnected ? "default" : "destructive"}
+      className="inline-flex items-center gap-1"
+    >
+      {isConnected ? (
+        <>
+          <SignalWifi4Bar fontSize="small" />
+          <span>Connected</span>
+        </>
+      ) : (
+        <>
+          <SignalWifiOff fontSize="small" />
+          <span>Disconnected</span>
+        </>
+      )}
+    </Badge>
   );
-};
-
-export default ConnectionStatus;
+}

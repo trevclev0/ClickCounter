@@ -13,6 +13,7 @@ export interface IStorage {
   getCounterUsers(): Promise<CounterUser[]>;
   createCounterUser(user: InsertCounterUser): Promise<CounterUser>;
   updateCounterUserCount(id: string, count: number): Promise<CounterUser | undefined>;
+  updateCounterUserName(id: string, name: string): Promise<CounterUser | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -53,7 +54,11 @@ export class MemStorage implements IStorage {
   }
 
   async createCounterUser(user: InsertCounterUser): Promise<CounterUser> {
-    const counterUser: CounterUser = { ...user };
+    // Ensure count is set to a number (default to 0 if not provided)
+    const counterUser: CounterUser = { 
+      ...user,
+      count: user.count ?? 0 
+    };
     this.counterUsers.set(user.id, counterUser);
     return counterUser;
   }
@@ -63,6 +68,15 @@ export class MemStorage implements IStorage {
     if (!user) return undefined;
     
     const updatedUser = { ...user, count };
+    this.counterUsers.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async updateCounterUserName(id: string, name: string): Promise<CounterUser | undefined> {
+    const user = await this.getCounterUser(id);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, name };
     this.counterUsers.set(id, updatedUser);
     return updatedUser;
   }

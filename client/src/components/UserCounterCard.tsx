@@ -1,53 +1,59 @@
-import { FC, useEffect, useRef, useState } from 'react';
-import { TouchApp } from '@mui/icons-material';
-import { CounterUser } from '@shared/schema';
+import React from 'react';
+import { Card, CardContent } from './ui/card';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { Badge } from './ui/badge';
+import { Person } from '@mui/icons-material';
+import type { CounterUser } from '@shared/schema';
 
 interface UserCounterCardProps {
   user: CounterUser;
   isCurrentUser: boolean;
 }
 
-const UserCounterCard: FC<UserCounterCardProps> = ({ user, isCurrentUser }) => {
-  const [highlight, setHighlight] = useState(false);
-  const prevCountRef = useRef(user.count);
-  
-  useEffect(() => {
-    // Check if the count has changed
-    if (prevCountRef.current !== user.count) {
-      setHighlight(true);
-      
-      // Remove highlight after animation completes
-      const timer = setTimeout(() => {
-        setHighlight(false);
-      }, 1200);
-      
-      // Update previous count
-      prevCountRef.current = user.count;
-      
-      return () => clearTimeout(timer);
+export function UserCounterCard({ user, isCurrentUser }: UserCounterCardProps) {
+  // Generate a unique color based on the user ID for the avatar
+  const generateColorFromId = (id: string): string => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
     }
-  }, [user.count]);
+    
+    const hue = hash % 360;
+    return `hsl(${hue}, 70%, 50%)`;
+  };
+  
+  const avatarColor = generateColorFromId(user.id);
+  const initials = user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2);
   
   return (
-    <div 
-      className={`counter-card bg-white rounded-lg shadow-1 p-4 border-l-4 
-        ${isCurrentUser ? 'border-primary' : 'border-secondary'}
-        ${highlight ? 'highlight' : ''}`}
-    >
-      <div className="flex justify-between items-center mb-2">
-        <span className="font-medium text-foreground">
-          {user.name} {isCurrentUser ? '(You)' : ''}
-        </span>
-        <span className="text-xs text-white bg-primary-light rounded-full px-2 py-0.5">
-          #{user.id.substring(0, 4)}
-        </span>
-      </div>
-      <div className="flex items-center mt-2">
-        <TouchApp className="text-secondary mr-2" />
-        <span className="text-2xl font-medium text-foreground">{user.count}</span>
-      </div>
-    </div>
+    <Card className={`overflow-hidden transition-all duration-200 ${isCurrentUser ? 'ring-2 ring-primary' : ''}`}>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10" style={{ backgroundColor: avatarColor }}>
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+            
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-foreground">{user.name}</p>
+                {isCurrentUser && (
+                  <Badge variant="outline" className="text-xs px-2">You</Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center">
+                <Person className="h-3 w-3 mr-1" />
+                <span className="truncate">{user.id}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-muted-foreground">Counter Value</span>
+          <span className="text-2xl font-bold text-primary">{user.count}</span>
+        </div>
+      </CardContent>
+    </Card>
   );
-};
-
-export default UserCounterCard;
+}

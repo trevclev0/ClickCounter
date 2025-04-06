@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { WebSocketServer, WebSocket } from "ws";
-import { messageSchema, WebSocketMessage } from "@shared/schema";
+import { messageSchema, WebSocketMessage, CounterUser } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { log } from "./vite";
 
@@ -39,15 +39,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userList = await storage.getCounterUsers();
     const userJoinedMessage: WebSocketMessage = {
       type: 'user_joined',
-      payload: {
-        id: ws.userId,
-        name: userName
-      }
+      userId: ws.userId,
+      name: userName
     };
 
     const userListMessage: WebSocketMessage = {
       type: 'user_list',
-      payload: userList
+      users: userList
     };
 
     // Send the user's ID first
@@ -65,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validatedMessage = messageSchema.parse(parsedMessage);
 
         switch (validatedMessage.type) {
-          case 'increment': {
+          case 'increment_counter': {
             // Update user's counter in storage
             const currentCount = (await storage.getCounterUser(ws.userId))?.count || 0;
             const newCount = currentCount + 1;
@@ -75,19 +73,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const updatedUserList = await storage.getCounterUsers();
             const updateMessage: WebSocketMessage = {
               type: 'user_list',
-              payload: updatedUserList
+              users: updatedUserList
             };
+            
+            // Also send a counter update message
+            const counterUpdateMessage: WebSocketMessage = {
+              type: 'counter_update',
+              userId: ws.userId,
+              count: newCount
+            };
+            
             broadcastMessage(wss, null, updateMessage);
+            broadcastMessage(wss, null, counterUpdateMessage);
             break;
           }
           case 'ping': {
             // Record ping timestamp and respond with pong
             ws.lastPing = Date.now();
             const pongMessage: WebSocketMessage = {
-              type: 'pong',
-              payload: { timestamp: ws.lastPing }
+              type: 'pong'
             };
             ws.send(JSON.stringify(pongMessage));
+            break;
+          }
+          case 'change_name': {
+            // Update user's display name
+            const newName = validatedMessage.name;
+            
+            // Update user in storage
+            const user = await storage.getCounterUser(ws.userId);
+            if (user && newName) {
+              await storage.updateCounterUserName(ws.userId, newName);
+              
+              // Broadcast updated user list to all clients
+              const updatedUserList = await storage.getCounterUsers();
+              const updateMessage: WebSocketMessage = {
+                type: 'user_list',
+                users: updatedUserList
+              };
+              
+              // Also send a name change message
+              const nameChangeMessage: WebSocketMessage = {
+                type: 'name_change',
+                userId: ws.userId,
+                name: newName
+              };
+              
+              broadcastMessage(wss, null, updateMessage);
+              broadcastMessage(wss, null, nameChangeMessage);
+            }
             break;
           }
           default:
@@ -110,7 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Broadcast the updated user list
       const updateMessage: WebSocketMessage = {
         type: 'user_list',
-        payload: updatedUserList
+        users: updatedUserList
       };
       broadcastMessage(wss, null, updateMessage);
     });
@@ -123,7 +157,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up a heartbeat interval to check for dead connections
   const interval = setInterval(() => {
-    wss.clients.forEach((ws: ExtendedWebSocket) => {
+    // Type-safe way to iterate through clients
+    wss.clients.forEach(function(client: WebSocket) {
+      // Cast the generic WebSocket to our ExtendedWebSocket type
+      const ws = client as ExtendedWebSocket;
+      
       if (ws.isAlive === false) {
         return ws.terminate();
       }
@@ -148,7 +186,7 @@ function broadcastMessage(
 ): void {
   const messageString = JSON.stringify(message);
   
-  wss.clients.forEach((client) => {
+  wss.clients.forEach(function(client: WebSocket) {
     if (client.readyState === WebSocket.OPEN && (!sender || client !== sender)) {
       client.send(messageString);
     }

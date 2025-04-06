@@ -39,3 +39,16 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
 }
+
+.dark .counter-card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* Dark mode transitions */
+:root {
+  --transition-duration: 150ms;
+}
+
+html {
+  transition: background-color var(--transition-duration) ease-in-out;
+}

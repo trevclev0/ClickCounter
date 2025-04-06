@@ -1,7 +1,9 @@
-import { FC } from 'react';
-import { Wifi } from '@mui/icons-material';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { SignalWifi4Bar, SignalWifiOff, CloudDone, CloudOff } from '@mui/icons-material';
 
-interface WebSocketInfo {
+export interface WebSocketInfo {
   status: string;
   server: string;
   latency: number;
@@ -11,37 +13,57 @@ interface ConnectionInfoProps {
   websocketInfo: WebSocketInfo;
 }
 
-const ConnectionInfo: FC<ConnectionInfoProps> = ({ websocketInfo }) => {
-  const getStatusColor = () => {
-    switch (websocketInfo.status) {
-      case 'connected':
-        return 'bg-green-100 text-green-800';
-      case 'connecting':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'disconnected':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+export function ConnectionInfo({ websocketInfo }: ConnectionInfoProps) {
+  const isConnected = websocketInfo.status === 'connected';
   
   return (
-    <div className="bg-background-paper rounded-lg shadow-1 p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <Wifi className="text-primary mr-2" />
-          <span className="text-sm text-muted-foreground">WebSocket Status</span>
+    <Card className="mb-6">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-xl font-medium flex items-center">
+            {isConnected ? (
+              <SignalWifi4Bar className="mr-2 text-green-500" />
+            ) : (
+              <SignalWifiOff className="mr-2 text-red-500" />
+            )}
+            Connection Status
+          </CardTitle>
+          <Badge 
+            variant={isConnected ? "default" : "destructive"}
+            className="px-3 py-1 text-xs"
+          >
+            {websocketInfo.status}
+          </Badge>
         </div>
-        <div className={`px-3 py-1 ${getStatusColor()} rounded-full text-xs font-medium`}>
-          {websocketInfo.status.charAt(0).toUpperCase() + websocketInfo.status.slice(1)}
+        <CardDescription>Details about your WebSocket connection</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-center space-x-2">
+            {isConnected ? (
+              <CloudDone className="text-green-500" />
+            ) : (
+              <CloudOff className="text-red-500" />
+            )}
+            <div className="text-sm">
+              <span className="font-medium">Server:</span> {websocketInfo.server || 'Not connected'}
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <span className="font-medium text-sm">Latency:</span>
+            {isConnected ? (
+              <Badge variant="outline" className="px-2 py-0.5 text-xs">
+                {websocketInfo.latency} ms
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="px-2 py-0.5 text-xs">
+                N/A
+              </Badge>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="mt-2 text-xs text-muted-foreground flex justify-between">
-        <span>Server: {websocketInfo.server}</span>
-        <span>Latency: {websocketInfo.latency}ms</span>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
-};
-
-export default ConnectionInfo;
+}
