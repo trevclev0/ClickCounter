@@ -42,30 +42,24 @@ export function useWebSocket(): UseWebSocketReturn {
   const autoReconnectRef = useRef(autoReconnect);
   const lastPingTime = useRef<number | null>(null);
 
-  // Load or generate user data on mount
+  // Load user data from local storage on mount
   useEffect(() => {
     const storedData = localStorage.getItem(USER_DATA_KEY);
-    let userData = storedData ? JSON.parse(storedData) : null;
-    
-    if (!userData?.userId) {
-      // Generate new user ID if none exists
-      userData = {
-        userId: nanoid(8),
-        username: '',
-        count: 0
-      };
-      localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
-    }
-    
-    setUserId(userData.userId);
-    userIdRef.current = userData.userId;
+    if (storedData) {
+      const userData = JSON.parse(storedData);
+      if (!userId && userData.userId) {
+        setUserId(userData.userId);
+        userIdRef.current = userData.userId;
 
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      if (userData.username) {
-        updateDisplayName(userData.username);
-      }
-      if (typeof userData.count === 'number') {
-        setUserCount(userData.count);
+        // Update name if we have it stored
+        if (userData.username && socketRef.current?.readyState === WebSocket.OPEN) {
+          updateDisplayName(userData.username);
+        }
+
+        // Update count if we have it stored
+        if (typeof userData.count === 'number') {
+          setUserCount(userData.count);
+        }
       }
     }
   }, [isConnected]);
@@ -111,15 +105,6 @@ export function useWebSocket(): UseWebSocketReturn {
         status: "connected",
         server: wsUrl,
       }));
-
-      // Send initial user ID message
-      if (userIdRef.current) {
-        const userJoinedMessage: WebSocketMessage = {
-          type: 'user_joined',
-          userId: userIdRef.current
-        };
-        socket.send(JSON.stringify(userJoinedMessage));
-      }
 
       // Delay ping to ensure connection is stable
       setTimeout(() => {

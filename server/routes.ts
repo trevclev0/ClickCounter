@@ -21,26 +21,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up connection handling
   wss.on('connection', async (ws: ExtendedWebSocket) => {
+    // Generate a unique ID for this connection
+    ws.userId = nanoid(8);
     ws.isAlive = true;
 
-    // Initial message handler to set up user ID
-    ws.once('message', async (message: string) => {
-      try {
-        const parsedMessage = JSON.parse(message.toString());
-        const validatedMessage = messageSchema.parse(parsedMessage);
-        
-        if (validatedMessage.type === 'user_joined' && validatedMessage.userId) {
-          ws.userId = validatedMessage.userId;
-          
-          // Create user if they don't exist
-          const existingUser = await storage.getCounterUser(ws.userId);
-          if (!existingUser) {
-            await storage.createCounterUser({
-              id: ws.userId,
-              name: `User ${ws.userId.substring(0, 4)}`,
-              count: 0
-            });
-          }
+    // Create a new user in storage
+    const userName = `User ${ws.userId.substring(0, 4)}`;
+    await storage.createCounterUser({
+      id: ws.userId,
+      name: userName,
+      count: 0
+    });
 
     log(`WebSocket client connected: ${ws.userId}`);
 
