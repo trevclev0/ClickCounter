@@ -64,7 +64,7 @@ export function useWebSocket(): UseWebSocketReturn {
       const currentUser = connectedUsers.find((user) => user.id === userId);
       const userData = {
         userId,
-        name: currentUser?.name || "",
+        username: currentUser?.name || "",
       };
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
     }
