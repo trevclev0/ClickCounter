@@ -61,13 +61,21 @@ export function useWebSocket(): UseWebSocketReturn {
 
     setUserId(userData.userId);
     userIdRef.current = userData.userId;
+    setUserCount(userData.count || 0);
 
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      if (userData.username) {
-        updateDisplayName(userData.username);
-      }
-      if (typeof userData.count === "number") {
-        setUserCount(userData.count);
+    // Wait for connection to be established before sending name update
+    if (isConnected && socketRef.current?.readyState === WebSocket.OPEN) {
+      updateDisplayName(userData.username || userData.userId);
+    }
+  }, [isConnected]);
+
+  // Handle name update after connection is established
+  useEffect(() => {
+    if (isConnected && userIdRef.current) {
+      const storedData = localStorage.getItem(USER_DATA_KEY);
+      if (storedData) {
+        const userData = JSON.parse(storedData);
+        updateDisplayName(userData.username || userData.userId);
       }
     }
   }, [isConnected]);
