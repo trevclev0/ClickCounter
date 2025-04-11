@@ -34,7 +34,7 @@ export function useWebSocket(): UseWebSocketReturn {
   });
 
   // Local storage key for user data
-  const USER_DATA_KEY = 'websocket_user_data';
+  const USER_DATA_KEY = "websocket_user_data";
 
   // Use refs to keep track of values inside event listeners
   const socketRef = useRef<WebSocket | null>(null);
@@ -59,12 +59,12 @@ export function useWebSocket(): UseWebSocketReturn {
     console.log("updating the userIdRef");
     userIdRef.current = userId;
     autoReconnectRef.current = autoReconnect;
-    
+
     if (userId) {
-      const currentUser = connectedUsers.find(user => user.id === userId);
+      const currentUser = connectedUsers.find((user) => user.id === userId);
       const userData = {
         userId,
-        username: currentUser?.name || ''
+        name: currentUser?.name || "",
       };
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
     }
@@ -288,14 +288,14 @@ export function useWebSocket(): UseWebSocketReturn {
           name: newName,
         };
         socketRef.current.send(JSON.stringify(nameChangeMessage));
-        
+
         // Update user data in local storage with new name
         const userData = {
           userId: userIdRef.current,
-          username: newName
+          name: newName,
         };
         localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
-        
+
         console.log(
           "Sent name change message for user:",
           userIdRef.current,
