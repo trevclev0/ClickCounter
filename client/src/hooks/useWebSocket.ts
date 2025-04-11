@@ -33,18 +33,42 @@ export function useWebSocket(): UseWebSocketReturn {
     latency: 0,
   });
 
+  // Local storage key for user data
+  const USER_DATA_KEY = 'websocket_user_data';
+
   // Use refs to keep track of values inside event listeners
   const socketRef = useRef<WebSocket | null>(null);
   const userIdRef = useRef<string | null>(null);
   const autoReconnectRef = useRef(autoReconnect);
   const lastPingTime = useRef<number | null>(null);
 
-  // Update ref when state changes
+  // Load user data from local storage on mount
+  useEffect(() => {
+    const storedData = localStorage.getItem(USER_DATA_KEY);
+    if (storedData) {
+      const userData = JSON.parse(storedData);
+      if (!userId && userData.userId) {
+        setUserId(userData.userId);
+        userIdRef.current = userData.userId;
+      }
+    }
+  }, []);
+
+  // Update ref and local storage when state changes
   useEffect(() => {
     console.log("updating the userIdRef");
     userIdRef.current = userId;
     autoReconnectRef.current = autoReconnect;
-  }, [userId, autoReconnect]);
+    
+    if (userId) {
+      const currentUser = connectedUsers.find(user => user.id === userId);
+      const userData = {
+        userId,
+        username: currentUser?.name || ''
+      };
+      localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+    }
+  }, [userId, autoReconnect, connectedUsers]);
 
   const connectToServer = useCallback(() => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
@@ -264,6 +288,14 @@ export function useWebSocket(): UseWebSocketReturn {
           name: newName,
         };
         socketRef.current.send(JSON.stringify(nameChangeMessage));
+        
+        // Update user data in local storage with new name
+        const userData = {
+          userId: userIdRef.current,
+          username: newName
+        };
+        localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+        
         console.log(
           "Sent name change message for user:",
           userIdRef.current,
