@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { WebSocketMessage, CounterUser } from "@shared/schema";
+import { nanoid } from "nanoid";
 
 type WebSocketStatus = "connecting" | "connected" | "disconnected";
 
@@ -46,17 +47,18 @@ export function useWebSocket(): UseWebSocketReturn {
   useEffect(() => {
     const storedData = localStorage.getItem(USER_DATA_KEY);
     let userData = storedData ? JSON.parse(storedData) : null;
-    
+
     if (!userData?.userId) {
+      const userId = nanoid(8);
       // Generate new user ID if none exists
       userData = {
-        userId: nanoid(8),
-        username: '',
-        count: 0
+        userId: userId,
+        username: userId,
+        count: 0,
       };
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
     }
-    
+
     setUserId(userData.userId);
     userIdRef.current = userData.userId;
 
@@ -64,7 +66,7 @@ export function useWebSocket(): UseWebSocketReturn {
       if (userData.username) {
         updateDisplayName(userData.username);
       }
-      if (typeof userData.count === 'number') {
+      if (typeof userData.count === "number") {
         setUserCount(userData.count);
       }
     }
@@ -80,7 +82,7 @@ export function useWebSocket(): UseWebSocketReturn {
       const currentUser = connectedUsers.find((user) => user.id === userId);
       const userData = {
         userId,
-        username: currentUser?.name || "",
+        username: currentUser?.name || userId,
         count: userCount,
       };
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
@@ -115,8 +117,8 @@ export function useWebSocket(): UseWebSocketReturn {
       // Send initial user ID message
       if (userIdRef.current) {
         const userJoinedMessage: WebSocketMessage = {
-          type: 'user_joined',
-          userId: userIdRef.current
+          type: "user_joined",
+          userId: userIdRef.current,
         };
         socket.send(JSON.stringify(userJoinedMessage));
       }
@@ -302,40 +304,45 @@ export function useWebSocket(): UseWebSocketReturn {
   }, []);
 
   // Function to update display name
-  const updateDisplayName = useCallback((newName: string) => {
-    if (
-      socketRef.current &&
-      socketRef.current.readyState === WebSocket.OPEN &&
-      userIdRef.current
-    ) {
-      try {
-        const nameChangeMessage: WebSocketMessage = {
-          type: "change_name",
-          name: newName,
-        };
-        socketRef.current.send(JSON.stringify(nameChangeMessage));
+  const updateDisplayName = useCallback(
+    (newName: string) => {
+      if (
+        socketRef.current &&
+        socketRef.current.readyState === WebSocket.OPEN &&
+        userIdRef.current
+      ) {
+        try {
+          const nameChangeMessage: WebSocketMessage = {
+            type: "change_name",
+            name: newName,
+          };
+          socketRef.current.send(JSON.stringify(nameChangeMessage));
 
-        // Update user data in local storage with new name
-        const userData = {
-          userId: userIdRef.current,
-          username: newName,
-          count: userCount,
-        };
-        localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+          // Update user data in local storage with new name
+          const userData = {
+            userId: userIdRef.current,
+            username: newName,
+            count: userCount,
+          };
+          localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
 
-        console.log(
-          "Sent name change message for user:",
-          userIdRef.current,
-          "new name:",
-          newName,
+          console.log(
+            "Sent name change message for user:",
+            userIdRef.current,
+            "new name:",
+            newName,
+          );
+        } catch (error) {
+          console.error("Error sending name change message:", error);
+        }
+      } else {
+        console.warn(
+          "Cannot update name: WebSocket not open or user ID not set",
         );
-      } catch (error) {
-        console.error("Error sending name change message:", error);
       }
-    } else {
-      console.warn("Cannot update name: WebSocket not open or user ID not set");
-    }
-  }, [userCount]);
+    },
+    [userCount],
+  );
 
   // Toggle connection status
   const toggleConnection = useCallback(() => {
