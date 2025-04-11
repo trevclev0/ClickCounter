@@ -1,0 +1,12 @@
+name = "counter-websocket"
+main = "src/index.ts"
+compatibility_date = "2023-05-15"
+
+# [durable_objects]
+# bindings = [
+#   { name = "COUNTER_ROOM", class_name = "CounterRoom" }
+# ]
+
+# [[migrations]]
+# tag = "v1"
+# new_classes = ["CounterRoom"]
