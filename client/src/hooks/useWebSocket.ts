@@ -25,7 +25,7 @@ interface UseWebSocketReturn {
 export function useWebSocket(): UseWebSocketReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userCount, setUserCount] = useState(0);
+  const [userCount, setUserCount] = useState<number | null>(null);
   const [connectedUsers, setConnectedUsers] = useState<CounterUser[]>([]);
   const [autoReconnect, setAutoReconnect] = useState(true);
   const [websocketInfo, setWebsocketInfo] = useState<WebSocketInfo>({
@@ -56,6 +56,7 @@ export function useWebSocket(): UseWebSocketReturn {
         username: userId,
         count: 0,
       };
+      console.log("useEffect hook: isConnected", userData);
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
     }
 
@@ -69,6 +70,18 @@ export function useWebSocket(): UseWebSocketReturn {
     }
   }, [isConnected]);
 
+  useEffect(() => {
+    if (userCount !== 0) {
+      const storedData = localStorage.getItem(USER_DATA_KEY);
+      const userData = storedData ? JSON.parse(storedData) : null;
+
+      userData.count = userCount;
+
+      console.log("useEffect hook: userCount", userData);
+      localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+    }
+  }, [userCount]);
+
   // Handle name update after connection is established
   useEffect(() => {
     if (isConnected && userIdRef.current) {
@@ -79,23 +92,6 @@ export function useWebSocket(): UseWebSocketReturn {
       }
     }
   }, [isConnected]);
-
-  // Update ref and local storage when state changes
-  useEffect(() => {
-    console.log("updating the userIdRef");
-    userIdRef.current = userId;
-    autoReconnectRef.current = autoReconnect;
-
-    if (userId) {
-      const currentUser = connectedUsers.find((user) => user.id === userId);
-      const userData = {
-        userId,
-        username: currentUser?.name || userId,
-        count: userCount,
-      };
-      localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
-    }
-  }, [userId, autoReconnect, connectedUsers, userCount]);
 
   const connectToServer = useCallback(() => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
@@ -165,7 +161,6 @@ export function useWebSocket(): UseWebSocketReturn {
 
         switch (message.type) {
           case "user_joined":
-            console.log({ userId, userIdRef });
             // Store the user ID when we join
             if (!userIdRef?.current && message.userId) {
               setUserId(message.userId);
@@ -332,6 +327,7 @@ export function useWebSocket(): UseWebSocketReturn {
             username: newName,
             count: userCount,
           };
+          console.log("useEffect hook: updateDisplayName userCount", userData);
           localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
 
           console.log(

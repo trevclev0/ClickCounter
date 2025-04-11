@@ -38,6 +38,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Create user if they don't exist
           const existingUser = await storage.getCounterUser(ws.userId);
           if (!existingUser) {
+            console.log("no existingUser, setting count to 0");
             await storage.createCounterUser({
               id: ws.userId,
               name: `User ${ws.userId.substring(0, 4)}`,
@@ -72,6 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.send(JSON.stringify(userListMessage));
 
     // Also send a specific counter update for this user
+    console.log("counterUpdateMessage, setting count to 0");
     const counterUpdateMessage: WebSocketMessage = {
       type: "counter_update",
       userId: ws.userId,
