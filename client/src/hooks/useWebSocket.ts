@@ -50,9 +50,19 @@ export function useWebSocket(): UseWebSocketReturn {
       if (!userId && userData.userId) {
         setUserId(userData.userId);
         userIdRef.current = userData.userId;
+
+        // Update name if we have it stored
+        if (userData.username && socketRef.current?.readyState === WebSocket.OPEN) {
+          updateDisplayName(userData.username);
+        }
+
+        // Update count if we have it stored
+        if (typeof userData.count === 'number') {
+          setUserCount(userData.count);
+        }
       }
     }
-  }, []);
+  }, [isConnected]);
 
   // Update ref and local storage when state changes
   useEffect(() => {
@@ -64,11 +74,12 @@ export function useWebSocket(): UseWebSocketReturn {
       const currentUser = connectedUsers.find((user) => user.id === userId);
       const userData = {
         userId,
-        name: currentUser?.name || "",
+        username: currentUser?.name || "",
+        count: userCount,
       };
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
     }
-  }, [userId, autoReconnect, connectedUsers]);
+  }, [userId, autoReconnect, connectedUsers, userCount]);
 
   const connectToServer = useCallback(() => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
@@ -292,7 +303,8 @@ export function useWebSocket(): UseWebSocketReturn {
         // Update user data in local storage with new name
         const userData = {
           userId: userIdRef.current,
-          name: newName,
+          username: newName,
+          count: userCount,
         };
         localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
 
@@ -308,7 +320,7 @@ export function useWebSocket(): UseWebSocketReturn {
     } else {
       console.warn("Cannot update name: WebSocket not open or user ID not set");
     }
-  }, []);
+  }, [userCount]);
 
   // Toggle connection status
   const toggleConnection = useCallback(() => {
