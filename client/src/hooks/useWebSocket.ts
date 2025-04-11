@@ -49,12 +49,11 @@ export function useWebSocket(): UseWebSocketReturn {
     let userData = storedData ? JSON.parse(storedData) : null;
 
     if (!userData?.userId) {
-      const userId = nanoid(8);
-      // Generate new user ID if none exists
+      const newUserId = nanoid(8);
       userData = {
-        userId: userId,
-        username: userId,
-        count: 0,
+        userId: newUserId,
+        username: newUserId,
+        count: 0
       };
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
     }
@@ -63,11 +62,11 @@ export function useWebSocket(): UseWebSocketReturn {
     userIdRef.current = userData.userId;
     setUserCount(userData.count || 0);
 
-    // Wait for connection to be established before sending name update
-    if (isConnected && socketRef.current?.readyState === WebSocket.OPEN) {
-      updateDisplayName(userData.username || userData.userId);
+    // Set initial name
+    if (socketRef.current?.readyState === WebSocket.OPEN && userData.username) {
+      updateDisplayName(userData.username);
     }
-  }, [isConnected]);
+  }, []);
 
   // Handle name update after connection is established
   useEffect(() => {
@@ -75,7 +74,9 @@ export function useWebSocket(): UseWebSocketReturn {
       const storedData = localStorage.getItem(USER_DATA_KEY);
       if (storedData) {
         const userData = JSON.parse(storedData);
-        updateDisplayName(userData.username || userData.userId);
+        if (userData.username && userData.username !== userIdRef.current) {
+          updateDisplayName(userData.username);
+        }
       }
     }
   }, [isConnected]);
