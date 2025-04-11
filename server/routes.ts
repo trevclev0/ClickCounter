@@ -72,15 +72,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Then send the full user list to the new user
     ws.send(JSON.stringify(userListMessage));
 
-    // Also send a specific counter update for this user
-    console.log("counterUpdateMessage, setting count to 0");
-    const counterUpdateMessage: WebSocketMessage = {
-      type: "counter_update",
-      userId: ws.userId,
-      count: 0, // Initial count is always 0
-    };
-    ws.send(JSON.stringify(counterUpdateMessage));
-
     // Broadcast to all other clients that a new user has joined
     broadcastMessage(wss, ws, userJoinedMessage);
 
