@@ -33,33 +33,17 @@ export function useWebSocket(): UseWebSocketReturn {
     latency: 0,
   });
 
-  // Local storage keys
-  const USER_ID_KEY = 'websocket_user_id';
-  const USER_NAME_KEY = 'websocket_user_name';
-
   // Use refs to keep track of values inside event listeners
   const socketRef = useRef<WebSocket | null>(null);
-  const userIdRef = useRef<string | null>(localStorage.getItem(USER_ID_KEY));
+  const userIdRef = useRef<string | null>(null);
   const autoReconnectRef = useRef(autoReconnect);
   const lastPingTime = useRef<number | null>(null);
 
-  // Initialize userId from local storage if available
-  useEffect(() => {
-    const storedUserId = localStorage.getItem(USER_ID_KEY);
-    if (storedUserId && !userId) {
-      setUserId(storedUserId);
-    }
-  }, []);
-
-  // Update ref and local storage when state changes
+  // Update ref when state changes
   useEffect(() => {
     console.log("updating the userIdRef");
     userIdRef.current = userId;
     autoReconnectRef.current = autoReconnect;
-    
-    if (userId) {
-      localStorage.setItem(USER_ID_KEY, userId);
-    }
   }, [userId, autoReconnect]);
 
   const connectToServer = useCallback(() => {
@@ -280,7 +264,6 @@ export function useWebSocket(): UseWebSocketReturn {
           name: newName,
         };
         socketRef.current.send(JSON.stringify(nameChangeMessage));
-        localStorage.setItem(USER_NAME_KEY, newName);
         console.log(
           "Sent name change message for user:",
           userIdRef.current,
