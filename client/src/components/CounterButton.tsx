@@ -5,9 +5,14 @@ import { Mouse } from "@mui/icons-material";
 interface CounterButtonProps {
   count: number;
   onIncrement: () => void;
+  disabled: boolean;
 }
 
-export function CounterButton({ count, onIncrement }: CounterButtonProps) {
+export function CounterButton({
+  count,
+  onIncrement,
+  disabled,
+}: CounterButtonProps) {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const handleClick = () => {
@@ -29,6 +34,7 @@ export function CounterButton({ count, onIncrement }: CounterButtonProps) {
       <Button
         size="lg"
         onClick={handleClick}
+        disabled={disabled}
         className="bg-primary hover:bg-primary/90 text-primary-foreground p-8 h-auto transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-full"
       >
         <Mouse style={{ height: 32, width: 32 }} />

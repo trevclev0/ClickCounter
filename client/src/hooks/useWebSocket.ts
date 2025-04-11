@@ -126,11 +126,18 @@ export function useWebSocket(): UseWebSocketReturn {
 
       // Send initial user ID message
       if (userIdRef.current) {
+        let lsUserCount;
+        const storedData = localStorage.getItem(USER_DATA_KEY);
+        if (storedData) {
+          const userData = JSON.parse(storedData);
+          lsUserCount = userData.count;
+        }
+
         console.log("sending user_joined", userCount);
         const userJoinedMessage: WebSocketMessage = {
           type: "user_joined",
           userId: userIdRef.current,
-          count: userCount,
+          count: lsUserCount || userCount,
         };
         socket.send(JSON.stringify(userJoinedMessage));
       }
