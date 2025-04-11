@@ -35,7 +35,6 @@ export function useWebSocket(): UseWebSocketReturn {
   const [userId, setUserId] = useState<string | null>(lsUserId);
   const [userCount, setUserCount] = useState<number>(lsUserCount);
   const [connectedUsers, setConnectedUsers] = useState<CounterUser[]>([]);
-  const [autoReconnect, setAutoReconnect] = useState(true);
   const [websocketInfo, setWebsocketInfo] = useState<WebSocketInfo>({
     status: "disconnected",
     server: "",
@@ -47,7 +46,6 @@ export function useWebSocket(): UseWebSocketReturn {
   // Use refs to keep track of values inside event listeners
   const socketRef = useRef<WebSocket | null>(null);
   const userIdRef = useRef<string | null>(null);
-  const autoReconnectRef = useRef(autoReconnect);
   const lastPingTime = useRef<number | null>(null);
 
   // Load or generate user data on mount
@@ -151,13 +149,6 @@ export function useWebSocket(): UseWebSocketReturn {
         server: "",
         latency: 0,
       }));
-
-      // Auto reconnect if enabled
-      if (autoReconnectRef.current) {
-        setTimeout(() => {
-          connectToServer();
-        }, 2000);
-      }
     };
 
     socket.onerror = (error) => {
@@ -365,13 +356,11 @@ export function useWebSocket(): UseWebSocketReturn {
     if (isConnected) {
       // Disconnect
       if (socketRef.current) {
-        setAutoReconnect(false); // Disable auto reconnect
         socketRef.current.close();
         socketRef.current = null;
       }
     } else {
       // Connect
-      setAutoReconnect(true);
       connectToServer();
     }
   }, [isConnected, connectToServer]);
