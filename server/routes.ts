@@ -48,13 +48,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       users: userList
     };
 
-    // Send the user's ID first
+    // Send the user's ID first to the new user
     ws.send(JSON.stringify(userJoinedMessage));
-    // Then send the full user list
+    
+    // Then send the full user list to the new user
     ws.send(JSON.stringify(userListMessage));
 
     // Broadcast to all other clients that a new user has joined
     broadcastMessage(wss, ws, userJoinedMessage);
+    
+    // Also broadcast the updated user list to all other clients
+    broadcastMessage(wss, ws, userListMessage);
 
     // Handle messages from client
     ws.on('message', async (message: string) => {
@@ -83,8 +87,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               count: newCount
             };
             
-            broadcastMessage(wss, null, updateMessage);
-            broadcastMessage(wss, null, counterUpdateMessage);
+            // First send direct confirmation to the current user
+            ws.send(JSON.stringify(counterUpdateMessage));
+            
+            // Then broadcast to all other clients
+            broadcastMessage(wss, ws, updateMessage);
+            broadcastMessage(wss, ws, counterUpdateMessage);
             break;
           }
           case 'ping': {
@@ -119,8 +127,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 name: newName
               };
               
-              broadcastMessage(wss, null, updateMessage);
-              broadcastMessage(wss, null, nameChangeMessage);
+              // Send immediate confirmation to the current user
+              ws.send(JSON.stringify(nameChangeMessage));
+              
+              // Then broadcast to everyone
+              broadcastMessage(wss, ws, updateMessage);
+              broadcastMessage(wss, ws, nameChangeMessage);
             }
             break;
           }

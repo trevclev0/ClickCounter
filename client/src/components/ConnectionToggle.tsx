@@ -1,13 +1,16 @@
-import React from 'react';
-import { Button } from './ui/button';
-import { SignalWifi4Bar, SignalWifiOff } from '@mui/icons-material';
+import React from "react";
+import { Button } from "./ui/button";
+import { SignalWifi4Bar, SignalWifiOff } from "@mui/icons-material";
 
 interface ConnectionToggleProps {
   isConnected: boolean;
   onToggle: () => void;
 }
 
-export function ConnectionToggle({ isConnected, onToggle }: ConnectionToggleProps) {
+export function ConnectionToggle({
+  isConnected,
+  onToggle,
+}: ConnectionToggleProps) {
   return (
     <Button
       variant="ghost"
@@ -17,9 +20,9 @@ export function ConnectionToggle({ isConnected, onToggle }: ConnectionToggleProp
       title={isConnected ? "Disconnect" : "Connect"}
     >
       {isConnected ? (
-        <SignalWifi4Bar className="h-5 w-5 text-green-500" />
+        <SignalWifi4Bar className="h-5 w-5" />
       ) : (
-        <SignalWifiOff className="h-5 w-5 text-red-500" />
+        <SignalWifiOff className="h-5 w-5 text-red-400" />
       )}
     </Button>
   );
