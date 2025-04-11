@@ -53,6 +53,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Then send the full user list to the new user
     ws.send(JSON.stringify(userListMessage));
+    
+    // Also send a specific counter update for this user
+    const counterUpdateMessage: WebSocketMessage = {
+      type: 'counter_update',
+      userId: ws.userId,
+      count: 0 // Initial count is always 0
+    };
+    ws.send(JSON.stringify(counterUpdateMessage));
 
     // Broadcast to all other clients that a new user has joined
     broadcastMessage(wss, ws, userJoinedMessage);
@@ -90,8 +98,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // First send direct confirmation to the current user
             ws.send(JSON.stringify(counterUpdateMessage));
             
-            // Then broadcast to all other clients
-            broadcastMessage(wss, ws, updateMessage);
+            // Broadcast the user list to all clients
+            broadcastMessage(wss, null, updateMessage);
+            
+            // Broadcast the counter update to other clients only
             broadcastMessage(wss, ws, counterUpdateMessage);
             break;
           }
@@ -130,8 +140,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Send immediate confirmation to the current user
               ws.send(JSON.stringify(nameChangeMessage));
               
-              // Then broadcast to everyone
-              broadcastMessage(wss, ws, updateMessage);
+              // Broadcast the updated user list to everyone
+              broadcastMessage(wss, null, updateMessage);
+              
+              // Only broadcast the name change to other clients
               broadcastMessage(wss, ws, nameChangeMessage);
             }
             break;

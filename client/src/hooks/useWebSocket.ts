@@ -105,6 +105,10 @@ export function useWebSocket(): UseWebSocketReturn {
             if (message.userId) {
               setUserId(message.userId);
               userIdRef.current = message.userId;
+              console.log('Received user_joined with ID:', message.userId);
+              
+              // Initial default counter value
+              setUserCount(0);
             }
             break;
             
@@ -114,7 +118,7 @@ export function useWebSocket(): UseWebSocketReturn {
               
               // Update our own counter if we're in the list
               if (userIdRef.current) {
-                const currentUser = message.users.find((user: CounterUser) => user.id === userIdRef.current);
+                const currentUser = message.users.find((user) => user.id === userIdRef.current);
                 if (currentUser) {
                   setUserCount(currentUser.count);
                 }
@@ -143,6 +147,8 @@ export function useWebSocket(): UseWebSocketReturn {
             
           case 'name_change':
             if (message.userId && message.name) {
+              console.log('Name change for user:', message.userId, 'to', message.name);
+              
               // Update the user's name in the connected users list
               setConnectedUsers(prevUsers => {
                 return prevUsers.map(user => {
@@ -152,6 +158,9 @@ export function useWebSocket(): UseWebSocketReturn {
                   return user;
                 });
               });
+              
+              // Log the operation
+              console.log('Current user ID:', userIdRef.current, 'Changed user ID:', message.userId);
             }
             break;
             

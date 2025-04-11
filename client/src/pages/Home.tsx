@@ -44,14 +44,14 @@ const Home: FC = () => {
             <CounterButton count={userCount} onIncrement={incrementCounter} />
 
             {/* User Profile Controls */}
-            {userId && (
+            {userId && isConnected && (
               <div className="mt-6 flex flex-col sm:flex-row gap-4 items-center justify-center p-4 border border-border rounded-lg bg-card/50">
                 <div className="flex items-center">
-                  {connectedUsers.find((user) => user.id === userId)?.name && (
+                  {/* Find current user by userId and use their name for the dialog */}
+                  {connectedUsers.find((user) => user.id === userId) && (
                     <NameChangeDialog
                       currentName={
-                        connectedUsers.find((user) => user.id === userId)
-                          ?.name || ""
+                        connectedUsers.find((user) => user.id === userId)?.name || ""
                       }
                       onNameChange={updateDisplayName}
                     />
