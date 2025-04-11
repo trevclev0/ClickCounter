@@ -49,9 +49,15 @@ const Home: FC = () => {
                 <div className="flex items-center">
                   {/* Find current user by userId and use their name for the dialog */}
                   {(() => {
-                    const currentUser = connectedUsers.find(user => user.id === userId);
+                    const currentUser = connectedUsers.find(
+                      (user) => user.id === userId,
+                    );
                     if (currentUser) {
-                      console.log('Found current user in list:', currentUser.id, currentUser.name);
+                      console.log(
+                        "Allowing user to edit",
+                        currentUser.id,
+                        currentUser.name,
+                      );
                       return (
                         <NameChangeDialog
                           currentName={currentUser.name}
