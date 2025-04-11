@@ -41,10 +41,14 @@ const Home: FC = () => {
         <div className="max-w-4xl mx-auto">
           {/* Counter Section */}
           <div className="flex flex-col items-center justify-center mb-10">
-            <CounterButton count={userCount} onIncrement={incrementCounter} />
+            <CounterButton 
+              count={userCount} 
+              onIncrement={incrementCounter} 
+              disabled={!isConnected} 
+            />
 
             {/* User Profile Controls */}
-            {userId && isConnected && (
+            {userId && (
               <div className="mt-6 flex flex-col sm:flex-row gap-4 items-center justify-center p-4 border border-border rounded-lg bg-card/50">
                 <div className="flex items-center">
                   {/* Find current user by userId and use their name for the dialog */}
@@ -53,16 +57,15 @@ const Home: FC = () => {
                       (user) => user.id === userId,
                     );
                     if (currentUser) {
-                      console.log(
-                        "Allowing user to edit",
-                        currentUser.id,
-                        currentUser.name,
-                      );
-                      return (
+                      return isConnected ? (
                         <NameChangeDialog
                           currentName={currentUser.name}
                           onNameChange={updateDisplayName}
                         />
+                      ) : (
+                        <div className="px-4 py-2 text-foreground opacity-50">
+                          {currentUser.name}
+                        </div>
                       );
                     }
                     return null;
