@@ -62,6 +62,7 @@ export function useWebSocket(): UseWebSocketReturn {
     socketRef.current = socket;
     
     socket.onopen = () => {
+      console.log('WebSocket connection established');
       setIsConnected(true);
       setWebsocketInfo(prev => ({ 
         ...prev, 
@@ -69,8 +70,10 @@ export function useWebSocket(): UseWebSocketReturn {
         server: wsUrl
       }));
       
-      // Send ping to measure latency
-      sendPing();
+      // Delay ping to ensure connection is stable
+      setTimeout(() => {
+        sendPing();
+      }, 500);
     };
     
     socket.onclose = () => {
@@ -221,21 +224,35 @@ export function useWebSocket(): UseWebSocketReturn {
   // Function to increment the counter
   const incrementCounter = useCallback(() => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      const incrementMessage: WebSocketMessage = {
-        type: 'increment_counter'
-      };
-      socketRef.current.send(JSON.stringify(incrementMessage));
+      try {
+        const incrementMessage: WebSocketMessage = {
+          type: 'increment_counter'
+        };
+        socketRef.current.send(JSON.stringify(incrementMessage));
+        console.log('Sent increment counter message');
+      } catch (error) {
+        console.error('Error sending increment message:', error);
+      }
+    } else {
+      console.warn('Cannot increment counter: WebSocket not open');
     }
   }, []);
   
   // Function to update display name
   const updateDisplayName = useCallback((newName: string) => {
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      const nameChangeMessage: WebSocketMessage = {
-        type: 'change_name',
-        name: newName
-      };
-      socketRef.current.send(JSON.stringify(nameChangeMessage));
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN && userIdRef.current) {
+      try {
+        const nameChangeMessage: WebSocketMessage = {
+          type: 'change_name',
+          name: newName
+        };
+        socketRef.current.send(JSON.stringify(nameChangeMessage));
+        console.log('Sent name change message for user:', userIdRef.current, 'new name:', newName);
+      } catch (error) {
+        console.error('Error sending name change message:', error);
+      }
+    } else {
+      console.warn('Cannot update name: WebSocket not open or user ID not set');
     }
   }, []);
   
