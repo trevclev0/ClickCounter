@@ -10,6 +10,8 @@ interface ExtendedWebSocket extends WebSocket {
   userId: string;
   isAlive: boolean;
   lastPing?: number;
+  count?: number;
+  name?: string;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -34,15 +36,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           validatedMessage.userId
         ) {
           ws.userId = validatedMessage.userId;
+          ws.count = validatedMessage.count;
+          ws.name = validatedMessage.name;
 
           // Create user if they don't exist
           const existingUser = await storage.getCounterUser(ws.userId);
           if (!existingUser) {
-            console.log("no existingUser, setting count to 0");
+            console.log("no existingUser, setting count", ws.count);
             await storage.createCounterUser({
               id: ws.userId,
-              name: `User ${ws.userId.substring(0, 4)}`,
-              count: 0,
+              name: ws.name || `User ${ws.userId.substring(0, 4)}`,
+              count: ws.count || 0,
             });
           }
         }

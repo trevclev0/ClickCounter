@@ -21,11 +21,19 @@ interface UseWebSocketReturn {
   updateDisplayName: (newName: string) => void;
   connectToServer: () => void;
 }
+const USER_DATA_KEY = "websocket_user_data";
 
 export function useWebSocket(): UseWebSocketReturn {
+  let lsUserId, lsUserCount;
+  const userDataStr = window.localStorage.getItem(USER_DATA_KEY);
+  if (userDataStr) {
+    const userData = JSON.parse(userDataStr);
+    lsUserId = userData.userId;
+    lsUserCount = userData.count;
+  }
   const [isConnected, setIsConnected] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userCount, setUserCount] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(lsUserId);
+  const [userCount, setUserCount] = useState<number>(lsUserCount);
   const [connectedUsers, setConnectedUsers] = useState<CounterUser[]>([]);
   const [autoReconnect, setAutoReconnect] = useState(true);
   const [websocketInfo, setWebsocketInfo] = useState<WebSocketInfo>({
@@ -35,7 +43,6 @@ export function useWebSocket(): UseWebSocketReturn {
   });
 
   // Local storage key for user data
-  const USER_DATA_KEY = "websocket_user_data";
 
   // Use refs to keep track of values inside event listeners
   const socketRef = useRef<WebSocket | null>(null);
@@ -62,6 +69,7 @@ export function useWebSocket(): UseWebSocketReturn {
 
     setUserId(userData.userId);
     userIdRef.current = userData.userId;
+    console.log("isconnect hook - setting userCount to", userData.count);
     setUserCount(userData.count || 0);
 
     // Wait for connection to be established before sending name update
@@ -120,9 +128,11 @@ export function useWebSocket(): UseWebSocketReturn {
 
       // Send initial user ID message
       if (userIdRef.current) {
+        console.log("sending user_joined", userCount);
         const userJoinedMessage: WebSocketMessage = {
           type: "user_joined",
           userId: userIdRef.current,
+          count: userCount,
         };
         socket.send(JSON.stringify(userJoinedMessage));
       }
@@ -168,6 +178,7 @@ export function useWebSocket(): UseWebSocketReturn {
               console.log("Updating user id to", message.userId);
 
               // Initial default counter value
+              console.log("setUserCount - setting user count to zero");
               setUserCount(0);
             }
             break;
@@ -181,7 +192,7 @@ export function useWebSocket(): UseWebSocketReturn {
                 const currentUser = message.users.find(
                   (user) => user.id === userIdRef.current,
                 );
-                if (currentUser) {
+                if (currentUser && !userCount) {
                   setUserCount(currentUser.count);
                 }
               }
@@ -202,6 +213,7 @@ export function useWebSocket(): UseWebSocketReturn {
 
               // If it's our counter, update the userCount state
               if (message.userId === userIdRef.current) {
+                console.log("our counter setting userCount to", message.count);
                 setUserCount(message.count);
               }
             }
